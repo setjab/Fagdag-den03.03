@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Velkommen til Fagdagen</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #000;
+    }
+    canvas {
+      display: block;
+    }
+    
+    /* Mer spektakulær CSS 3D-tekst */
+    .overlay-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ffffff;
+      font-family: 'Arial Black', Gadget, sans-serif;
+      font-size: 42px;
+      font-weight: bold;
+      text-align: center;
+      text-shadow: 
+        0 1px 0 #ccc,
+        0 2px 0 #ccc,
+        0 3px 0 #ccc,
+        0 4px 0 #ccc,
+        0 5px 0 #ccc,
+        0 6px 0 transparent,
+        0 7px 0 transparent,
+        0 8px 0 transparent,
+        0 9px 0 transparent,
+        0 10px 30px rgba(0, 0, 0, 0.9);
+      pointer-events: none;
+      z-index: 100;
+      transform-style: preserve-3d;
+      animation: textAnimation 5s infinite alternate;
+    }
+    
+    .overlay-text .highlight {
+      color: #4488ff;
+      text-shadow: 
+        0 0 10px #4488ff,
+        0 0 20px #4488ff,
+        0 0 30px #4488ff,
+        0 0 40px #4488ff,
+        0 0 50px #4488ff;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes textAnimation {
+      0% {
+        transform: translate(-50%, -50%) perspective(500px) rotateX(5deg) rotateY(-5deg);
+      }
+      100% {
+        transform: translate(-50%, -50%) perspective(500px) rotateX(-5deg) rotateY(5deg);
+      }
+    }
+    
+    @keyframes glow {
+      from {
+        text-shadow: 
+          0 0 10px #4488ff,
+          0 0 20px #4488ff,
+          0 0 30px #4488ff;
+      }
+      to {
+        text-shadow: 
+          0 0 15px #4488ff,
+          0 0 25px #4488ff,
+          0 0 35px #4488ff,
+          0 0 45px #4488ff,
+          0 0 55px #4488ff;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay-text">
+    <span class="highlight">#Velkommen</span> til fagdagen<br>den 03. Mars 2025
+  </div>
+  
+  <script>
+    // Three.js oppsett
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Bakgrunn
+    scene.background = new THREE.Color(0x000000);
+
+    // Lys
+    const ambientLight = new THREE.AmbientLight(0x606060);
+    scene.add(ambientLight);
+    
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(0, 0, 100);
+    scene.add(pointLight);
+
+    // Stjerner
+    function createStars() {
+      const starsGeometry = new THREE.BufferGeometry();
+      const starsMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.2,
+      });
+
+      const starsVertices = [];
+      for (let i = 0; i < 15000; i++) {
+        const x = (Math.random() - 0.5) * 2000;
+        const y = (Math.random() - 0.5) * 2000;
+        const z = (Math.random() - 0.5) * 2000;
+        starsVertices.push(x, y, z);
+      }
+
+      starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+      const stars = new THREE.Points(starsGeometry, starsMaterial);
+      scene.add(stars);
+    }
+    createStars();
+
+    // Planetdata - TO GANGER STØRRE! Alle verdier doblet
+    const planetData = [
+      { name: "Merkur", size: 1.6, color: 0x888888, distance: 30, speed: 0.020, textureRotation: 0.01 },
+      { name: "Venus", size: 3.0, color: 0xe5c020, distance: 36, speed: 0.015, textureRotation: 0.008 },
+      { name: "Jorden", size: 3.2, color: 0x3333ff, distance: 42, speed: 0.013, textureRotation: 0.01 },
+      { name: "Mars", size: 2.4, color: 0xdd3333, distance: 48, speed: 0.011, textureRotation: 0.012 },
+      { name: "Jupiter", size: 9.0, color: 0xe0b060, distance: 64, speed: 0.007, textureRotation: 0.015 },
+      { name: "Saturn", size: 8.0, color: 0xf4c542, distance: 80, speed: 0.005, textureRotation: 0.01, hasRings: true },
+      { name: "Uranus", size: 5.0, color: 0x99ccff, distance: 92, speed: 0.003, textureRotation: 0.008 },
+      { name: "Neptun", size: 4.8, color: 0x3355ff, distance: 104, speed: 0.002, textureRotation: 0.01 }
+    ];
+
+    // Opprett planeter
+    const planets = [];
+    const planetGroup = new THREE.Group();
+    scene.add(planetGroup);
+
+    function createPlanet(data, index) {
+      // Planet
+      const planetGeometry = new THREE.SphereGeometry(data.size, 32, 32);
+      const planetMaterial = new THREE.MeshPhongMaterial({
+        color: data.color,
+        emissive: new THREE.Color(data.color).multiplyScalar(0.2),
+        specular: 0x333333,
+        shininess: 30
+      });
+      const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+      
+      // Planetgruppe for plassering og rotasjon
+      const planetObj = new THREE.Group();
+      planetObj.add(planet);
+      
+      // Start i tilfeldig posisjon langs banen
+      const randomAngle = Math.random() * Math.PI * 2;
+      
+      // Oppsett for bane - forskjellige plan for hver planet
+      planetObj.rotation.x = index * 0.05;
+      planetObj.rotation.z = index * 0.03;
+      
+      // Saturn har ring
+      if (data.hasRings) {
+        const ringGeometry = new THREE.RingGeometry(data.size * 1.3, data.size * 2, 64);
+        const ringMaterial = new THREE.MeshPhongMaterial({
+          color: 0xeecc99,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.8
+        });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        ring.rotation.x = Math.PI / 2;
+        planet.add(ring);
+      }
+      
+      // Legger til i gruppe
+      planetGroup.add(planetObj);
+      
+      // Lagrer referanser og data
+      planets.push({
+        obj: planetObj,
+        planet: planet,
+        data: data,
+        angle: randomAngle
+      });
+      
+      return planetObj;
+    }
+    
+    // Opprett alle planetene
+    planetData.forEach((data, index) => {
+      createPlanet(data, index);
+    });
+    
+    // Legg til lysende kometer i bakgrunnen for mer spektakulær effekt
+    function createComet() {
+      const cometGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+      const cometMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        emissive: 0xaaaaff,
+        emissiveIntensity: 1
+      });
+      const comet = new THREE.Mesh(cometGeometry, cometMaterial);
+      
+      // Tilfeldig posisjon langt ute
+      const distance = 150 + Math.random() * 50;
+      const angle = Math.random() * Math.PI * 2;
+      const height = (Math.random() - 0.5) * 100;
+      
+      comet.position.set(
+        Math.cos(angle) * distance,
+        height,
+        Math.sin(angle) * distance
+      );
+      
+      // Lysende hale
+      const cometLight = new THREE.PointLight(0xaaaaff, 2, 20);
+      comet.add(cometLight);
+      
+      scene.add(comet);
+      
+      // Hastighet og retning
+      const speed = 0.5 + Math.random() * 1;
+      const direction = new THREE.Vector3(
+        -comet.position.x,
+        -comet.position.y,
+        -comet.position.z
+      ).normalize().multiplyScalar(speed);
+      
+      return { obj: comet, direction: direction };
+    }
+    
+    const comets = [];
+    for (let i = 0; i < 5; i++) {
+      comets.push(createComet());
+    }
+    
+    // Plasser kamera
+    camera.position.z = 120; // Flytt kameraet lenger unna for det større solsystemet
+
+    // Animasjon
+    let time = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      time += 0.01;
+      
+      // Animer planeter
+      planets.forEach((planetInfo) => {
+        const data = planetInfo.data;
+        
+        // Oppdater vinkelen
+        planetInfo.angle += data.speed;
+        
+        // Plasser planeten i bane rundt sentrum
+        planetInfo.planet.rotation.y += data.textureRotation;
+        
+        // Posisjonering i bane
+        const x = Math.cos(planetInfo.angle) * data.distance;
+        const z = Math.sin(planetInfo.angle) * data.distance;
+        
+        planetInfo.obj.position.set(x, 0, z);
+      });
+      
+      // Animer kometer
+      comets.forEach((comet, index) => {
+        comet.obj.position.add(comet.direction);
+        
+        // Reset komet hvis den er nær sentrum eller for langt ute
+        const distanceToCenter = comet.obj.position.length();
+        if (distanceToCenter < 10 || distanceToCenter > 300) {
+          scene.remove(comet.obj);
+          comets[index] = createComet();
+        }
+      });
+      
+      // Roter planetgruppen sakte for mer dynamikk
+      planetGroup.rotation.y = time * 0.05;
+      
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Responsive
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
